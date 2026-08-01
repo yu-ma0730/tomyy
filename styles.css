@@ -509,6 +509,125 @@ body {
     opacity: 0.8;
 }
 
+/* Pattern Grid */
+.pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .pattern-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pattern-card {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.pattern-header {
+    padding: 1.5rem;
+    color: white;
+}
+
+.pattern-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem;
+}
+
+.pattern-header.uptrend {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.pattern-header.downtrend {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.pattern-header.continuation {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.pattern-type {
+    display: inline-block;
+    font-size: 0.85rem;
+    background-color: rgba(255, 255, 255, 0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+}
+
+.pattern-body {
+    padding: 1.5rem;
+}
+
+.pattern-info {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pattern-info:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.pattern-info h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.pattern-info p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.pattern-info ul {
+    margin: 0.5rem 0 0 1.5rem;
+    color: #666;
+}
+
+.pattern-info li {
+    margin-bottom: 0.3rem;
+}
+
+/* Guide Grid */
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.guide-box {
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(5, 150, 105, 0.1));
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.guide-box h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.guide-box ul {
+    margin-left: 1.5rem;
+    color: #666;
+}
+
+.guide-box li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
 /* Rating Stars */
 .rating {
     display: flex;
