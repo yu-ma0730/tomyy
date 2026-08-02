@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カスタムインジケーター作成 - FX分析ナビ</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .builder-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 1024px) {
+            .builder-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .builder-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .builder-section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 1rem;
+        }
+
+        .indicator-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .indicator-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .indicator-item:hover {
+            background-color: #f0f9ff;
+            transform: translateX(5px);
+        }
+
+        .indicator-item.checked {
+            background-color: #ecfdf5;
+            border-left-color: var(--secondary-color);
+        }
+
+        .indicator-checkbox {
+            margin-top: 5px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .indicator-content {
+            flex: 1;
+        }
+
+        .indicator-content h3 {
+            margin: 0 0 0.3rem 0;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+
+        .indicator-content p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        .category-badge.trend {
+            background-color: var(--primary-color);
+        }
+
+        .category-badge.momentum {
+            background-color: var(--secondary-color);
+        }
+
+        .category-badge.volatility {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .category-badge.volume {
+            background-color: #8b5cf6;
+            color: white;
+        }
+
+        /* Custom Indicator Display */
+        .custom-indicator {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(5, 150, 105, 0.1));
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .custom-indicator h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .selected-list {
+            background-color: white;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .selected-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .remove-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .strategy-section {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .strategy-section h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .strategy-section p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .signal-section {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .signal-section h5 {
+            color: var(--primary-color);
+            margin: 0 0 0.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .signal-section ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .signal-section li {
+            margin-bottom: 0.3rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #999;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-custom {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary-custom {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #1d35a1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary-custom {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary-custom:hover {
+            background-color: #047857;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-outline {
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .saved-strategies {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .saved-item {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-item-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .saved-item-indicators {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .filter-category {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.4rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">FX分析ナビ</div>
+            <ul class="nav-links">
+                <li><a href="index.html">ホーム</a></li>
+                <li><a href="technical.html">テクニカル分析</a></li>
+                <li><a href="patterns.html">チャートパターン</a></li>
+                <li><a href="chart-gallery.html">パターン画像</a></li>
+                <li><a href="indicator-builder.html" class="active">インジケーター</a></li>
+                <li><a href="fundamental.html">ファンダメンタル分析</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>カスタムインジケーター作成</h1>
+            <p>複数のインジケーターを組み合わせて、独自の取引戦略を構築</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content-section">
+            <h2>インジケータービルダー</h2>
+            <p>下記のインジケーターをチェックして組み合わせることで、あなた独自のカスタムインジケーターを作成できます。複数のインジケーターを組み合わせることで、より正確な売買シグナルを得ることができます。</p>
+        </section>
+
+        <div class="builder-container">
+            <!-- Left Panel: Indicator Selection -->
+            <div class="builder-section">
+                <h2>インジケーター選択</h2>
+
+                <div class="filter-category">
+                    <button class="filter-btn active" onclick="filterIndicators('all')">すべて</button>
+                    <button class="filter-btn" onclick="filterIndicators('trend')">トレンド</button>
+                    <button class="filter-btn" onclick="filterIndicators('momentum')">モメンタム</button>
+                    <button class="filter-btn" onclick="filterIndicators('volatility')">ボラティリティ</button>
+                    <button class="filter-btn" onclick="filterIndicators('volume')">出来高</button>
+                </div>
+
+                <div class="indicator-list" id="indicatorList">
+                    <!-- インジケーターアイテムがJavaScriptで動的に追加 -->
+                </div>
+            </div>
+
+            <!-- Right Panel: Custom Strategy -->
+            <div class="builder-section">
+                <h2>カスタム戦略</h2>
+
+                <div class="custom-indicator">
+                    <h3>選択されたインジケーター</h3>
+                    <div id="selectedIndicators">
+                        <div class="empty-state">
+                            <p>👈 左からインジケーターを選択してください</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="strategyDisplay" style="display: none;">
+                    <div class="strategy-section">
+                        <h4>戦略名</h4>
+                        <input type="text" id="strategyName" placeholder="例：トレンドフォロー戦略" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                    </div>
+
+                    <div class="signal-section">
+                        <h5>買いシグナル</h5>
+                        <ul id="buySignals"></ul>
+                    </div>
+
+                    <div class="signal-section">
+                        <h5>売りシグナル</h5>
+                        <ul id="sellSignals"></ul>
+                    </div>
+
+                    <div class="signal-section">
+                        <h5>注意点</h5>
+                        <ul id="cautions"></ul>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-custom btn-primary-custom" onclick="saveStrategy()">💾 戦略を保存</button>
+                        <button class="btn-custom btn-secondary-custom" onclick="resetStrategy()">🔄 リセット</button>
+                    </div>
+                </div>
+
+                <div id="savedStrategies" class="saved-strategies" style="display: none;">
+                    <h3 style="color: var(--primary-color); margin-top: 0;">保存済みの戦略</h3>
+                    <div id="savedList"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 FX分析ナビ. All rights reserved.</p>
+            <p class="disclaimer">このサイトは教育目的です。投資判断は自己責任で行ってください。</p>
+        </div>
+    </footer>
+
+    <script src="indicator-builder.js"></script>
+</body>
+</html>
