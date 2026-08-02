@@ -509,6 +509,21 @@ body {
     opacity: 0.8;
 }
 
+/* Pattern Chart */
+.pattern-chart {
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.05), rgba(5, 150, 105, 0.05));
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.chart-svg {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+}
+
 /* Pattern Grid */
 .pattern-grid {
     display: grid;
