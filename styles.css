@@ -524,6 +524,13 @@ body {
     max-width: 100%;
 }
 
+.pattern-chart canvas {
+    background-color: white;
+    border-radius: 4px;
+    display: block;
+    margin: 0 auto;
+}
+
 /* Pattern Grid */
 .pattern-grid {
     display: grid;

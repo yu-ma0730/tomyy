@@ -46,23 +46,7 @@
                     <span class="pattern-type">反転パターン（強気）</span>
                 </div>
                 <div class="pattern-chart">
-                    <svg viewBox="0 0 300 150" class="chart-svg">
-                        <!-- グリッド -->
-                        <line x1="20" y1="120" x2="280" y2="120" stroke="#e5e7eb" stroke-width="1"/>
-                        <text x="10" y="135" font-size="12" fill="#999">ネック</text>
-                        <!-- 左肩 -->
-                        <polyline points="30,120 50,70 70,120" fill="none" stroke="#ef4444" stroke-width="2"/>
-                        <!-- 頭 -->
-                        <polyline points="70,120 100,40 130,120" fill="none" stroke="#ef4444" stroke-width="2.5"/>
-                        <!-- 右肩 -->
-                        <polyline points="130,120 150,70 170,120" fill="none" stroke="#ef4444" stroke-width="2"/>
-                        <!-- 売りシグナル -->
-                        <polyline points="170,120 190,90 210,60 230,40 250,50" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,5"/>
-                        <!-- ラベル -->
-                        <text x="48" y="55" font-size="11" fill="#666">左肩</text>
-                        <text x="95" y="25" font-size="11" fill="#666">頭</text>
-                        <text x="150" y="55" font-size="11" fill="#666">右肩</text>
-                    </svg>
+                    <canvas id="canvas-hs" width="500" height="220" style="width: 100%; height: auto; border-radius: 6px;"></canvas>
                 </div>
                 <div class="pattern-body">
                     <div class="pattern-info">
@@ -160,22 +144,7 @@
                     <span class="pattern-type">反転パターン（強気）</span>
                 </div>
                 <div class="pattern-chart">
-                    <svg viewBox="0 0 300 150" class="chart-svg">
-                        <!-- ネックライン -->
-                        <line x1="20" y1="100" x2="280" y2="100" stroke="#e5e7eb" stroke-width="1"/>
-                        <text x="10" y="115" font-size="12" fill="#999">ネック</text>
-                        <!-- 1番目の山 -->
-                        <polyline points="40,100 60,50 80,100" fill="none" stroke="#ef4444" stroke-width="2"/>
-                        <!-- 谷 -->
-                        <polyline points="80,100 120,75" fill="none" stroke="#ef4444" stroke-width="2"/>
-                        <!-- 2番目の山 -->
-                        <polyline points="120,75 140,50 160,100" fill="none" stroke="#ef4444" stroke-width="2"/>
-                        <!-- 売りシグナル -->
-                        <polyline points="160,100 180,80 200,60 220,40 240,35" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,5"/>
-                        <!-- ラベル -->
-                        <text x="55" y="30" font-size="11" fill="#666">山1</text>
-                        <text x="135" y="30" font-size="11" fill="#666">山2</text>
-                    </svg>
+                    <canvas id="canvas-dt" width="500" height="220" style="width: 100%; height: auto; border-radius: 6px;"></canvas>
                 </div>
                 <div class="pattern-body">
                     <div class="pattern-info">
@@ -394,21 +363,7 @@
                     <span class="pattern-type">継続パターン</span>
                 </div>
                 <div class="pattern-chart">
-                    <svg viewBox="0 0 300 150" class="chart-svg">
-                        <!-- 高値ライン（下降） -->
-                        <line x1="30" y1="60" x2="180" y2="90" stroke="#ef4444" stroke-width="2"/>
-                        <!-- 安値ライン（上昇） -->
-                        <line x1="30" y1="110" x2="180" y2="90" stroke="#3b82f6" stroke-width="2"/>
-                        <!-- 値動き（ランダム） -->
-                        <polyline points="30,70 50,75 70,80 90,85 110,87 130,89 150,90 170,91" fill="none" stroke="#666" stroke-width="1.5" opacity="0.7"/>
-                        <!-- ブレイク（上） -->
-                        <polyline points="180,90 200,70 220,50 240,40" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,5"/>
-                        <!-- ブレイク（下） -->
-                        <polyline points="180,90 200,110 220,130" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.5"/>
-                        <!-- ラベル -->
-                        <text x="100" y="35" font-size="12" fill="#ef4444">高値</text>
-                        <text x="100" y="130" font-size="12" fill="#3b82f6">安値</text>
-                    </svg>
+                    <canvas id="canvas-tri" width="500" height="220" style="width: 100%; height: auto; border-radius: 6px;"></canvas>
                 </div>
                 <div class="pattern-body">
                     <div class="pattern-info">
