@@ -117,9 +117,9 @@ int OnCalculate(const int rates_total,
 bool CheckBuySignal(int bar)
 {
    // Get 1H timeframe data (H1)
-   double h1_ema20 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema80 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema200 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
+   double h1_ema20 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, bar);
+   double h1_ema80 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, bar);
+   double h1_ema200 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, bar);
 
    double h1_close = iClose(Symbol(), PERIOD_H1, bar);
    double h1_open = iOpen(Symbol(), PERIOD_H1, bar);
@@ -132,9 +132,9 @@ bool CheckBuySignal(int bar)
    double m5_high = iHigh(Symbol(), PERIOD_M5, bar);
    double m5_low = iLow(Symbol(), PERIOD_M5, bar);
 
-   double m5_ema20 = iMA(Symbol(), PERIOD_M5, EMA_20, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double m5_ema80 = iMA(Symbol(), PERIOD_M5, EMA_80, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
+   double m5_ema20 = iMA(Symbol(), PERIOD_M5, EMA_20, 0, MODE_EMA, bar);
+   double m5_ema80 = iMA(Symbol(), PERIOD_M5, EMA_80, 0, MODE_EMA, bar);
+   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, bar);
 
    //--- 1. Environment check (1H)
    // Price must be above 200 EMA
@@ -167,9 +167,9 @@ bool CheckBuySignal(int bar)
 bool CheckSellSignal(int bar)
 {
    // Get 1H timeframe data
-   double h1_ema20 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema80 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema200 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
+   double h1_ema20 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, bar);
+   double h1_ema80 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, bar);
+   double h1_ema200 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, bar);
 
    double h1_close = iClose(Symbol(), PERIOD_H1, bar);
    double h1_open = iOpen(Symbol(), PERIOD_H1, bar);
@@ -182,9 +182,9 @@ bool CheckSellSignal(int bar)
    double m5_high = iHigh(Symbol(), PERIOD_M5, bar);
    double m5_low = iLow(Symbol(), PERIOD_M5, bar);
 
-   double m5_ema20 = iMA(Symbol(), PERIOD_M5, EMA_20, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double m5_ema80 = iMA(Symbol(), PERIOD_M5, EMA_80, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
+   double m5_ema20 = iMA(Symbol(), PERIOD_M5, EMA_20, 0, MODE_EMA, bar);
+   double m5_ema80 = iMA(Symbol(), PERIOD_M5, EMA_80, 0, MODE_EMA, bar);
+   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, bar);
 
    //--- 1. Environment check (1H)
    // Price must be below 200 EMA
@@ -237,12 +237,12 @@ bool IsH1Calm(int bar)
    }
 
    // Check that H1 EMA is stable (not crossing)
-   double h1_ema20_0 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema20_1 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, PRICE_CLOSE, bar + 1);
-   double h1_ema80_0 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema80_1 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, PRICE_CLOSE, bar + 1);
-   double h1_ema200_0 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
-   double h1_ema200_1 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar + 1);
+   double h1_ema20_0 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, bar);
+   double h1_ema20_1 = iMA(Symbol(), PERIOD_H1, EMA_20, 0, MODE_EMA, bar + 1);
+   double h1_ema80_0 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, bar);
+   double h1_ema80_1 = iMA(Symbol(), PERIOD_H1, EMA_80, 0, MODE_EMA, bar + 1);
+   double h1_ema200_0 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, bar);
+   double h1_ema200_1 = iMA(Symbol(), PERIOD_H1, EMA_200, 0, MODE_EMA, bar + 1);
 
    // Reject if multiple EMA crossings
    int crossing_count = 0;
@@ -262,7 +262,7 @@ bool CheckPushLowFormation(int bar)
    double m5_low_1 = iLow(Symbol(), PERIOD_M5, bar + 1);
    double m5_low_2 = iLow(Symbol(), PERIOD_M5, bar + 2);
 
-   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
+   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, bar);
 
    // Need at least 2 bars with similar lows (within 30 pips)
    if(MathAbs(m5_low_0 - m5_low_1) < 30 * Point())
@@ -290,7 +290,7 @@ bool CheckRetracementHighFormation(int bar)
    double m5_high_1 = iHigh(Symbol(), PERIOD_M5, bar + 1);
    double m5_high_2 = iHigh(Symbol(), PERIOD_M5, bar + 2);
 
-   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, PRICE_CLOSE, bar);
+   double m5_ema200 = iMA(Symbol(), PERIOD_M5, EMA_200, 0, MODE_EMA, bar);
 
    // Need at least 2 bars with similar highs (within 30 pips)
    if(MathAbs(m5_high_0 - m5_high_1) < 30 * Point())
