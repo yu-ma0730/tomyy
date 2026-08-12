@@ -127,7 +127,7 @@ int OnInit()
       return INIT_FAILED;
    }
 
-   IndicatorSetString(INDICATOR_SHORTNAME, "P4 Signal Tool - EMA(10,20,40,80) (15M)");
+   IndicatorSetString(INDICATOR_SHORTNAME, "P4手法 - EMA(10,20,40,80)");
    IndicatorSetInteger(INDICATOR_DIGITS, _Digits);
 
    return INIT_SUCCEEDED;
@@ -229,9 +229,9 @@ int OnCalculate(const int rates_total,
 void DisplayLegend()
 {
    // Create legend text
-   string legend_text = "P4 Signal Tool - EMA(10,20,40,80)\n";
-   legend_text += "Red=EMA10  Orange=EMA20  Green=EMA40  Blue=EMA80\n";
-   legend_text += "BB=Bollinger Band  Green Arrow=Long  Red Arrow=Short";
+   string legend_text = "P4手法 - EMA(10,20,40,80) パーフェクトオーダー\n";
+   legend_text += "赤=EMA10  橙=EMA20  緑=EMA40  青=EMA80\n";
+   legend_text += "BB=ボリンジャーバンド  緑矢印=ロング  赤矢印=ショート";
 
    // Remove old label if exists
    ObjectDelete(0, "P4_Legend");
