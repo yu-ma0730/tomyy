@@ -1,0 +1,243 @@
+//@version=5
+indicator("FX Trading Signals [1H/5M]", overlay=true)
+
+// =============================================================================
+// FX TRADING SIGNALS - 1時間足観測 + 5分足エントリー
+// 対象：USDJPY, EURJPY, EURUSD, XAUUSD
+// =============================================================================
+
+// === SETTINGS ===
+lookbackPeriods = input.int(20, "Lookback Periods for Swing", minval=5)
+fibLevel1 = input.float(38.2, "Fib Level 1 (%)")
+fibLevel2 = input.float(50.0, "Fib Level 2 (%)")
+fibLevel3 = input.float(61.8, "Fib Level 3 (%)")
+showFib = input.bool(true, "Show Fibonacci Levels")
+showEMA = input.bool(true, "Show EMA Lines")
+showSignals = input.bool(true, "Show Entry Signals")
+
+// === EMA SETTINGS ===
+ema10 = ta.ema(close, 10)
+ema20 = ta.ema(close, 20)
+ema40 = ta.ema(close, 40)
+ema80 = ta.ema(close, 80)
+ema200 = ta.ema(close, 200)
+
+// === MULTI-TIMEFRAME DATA ===
+// 1時間足データ取得
+close1h = request.security(syminfo.tickerid, "60", close)
+high1h = request.security(syminfo.tickerid, "60", high)
+low1h = request.security(syminfo.tickerid, "60", low)
+ema2001h = request.security(syminfo.tickerid, "60", ta.ema(close, 200))
+
+// 5分足用（現在足がすでに5分足と仮定）
+close5m = close
+high5m = high
+low5m = low
+
+// =============================================================================
+// 1時間足での環境認識
+// =============================================================================
+
+isAboveEMA200_1h = close1h > ema2001h
+isBelowEMA200_1h = close1h < ema2001h
+isNearEMA200_1h = math.abs(close1h - ema2001h) < (high1h - low1h) * 0.5
+
+// 直近スイングの高値・安値（1時間足）
+swingHigh1h = ta.highest(high1h, lookbackPeriods)
+swingLow1h = ta.lowest(low1h, lookbackPeriods)
+
+// 段階判定（1時間足）
+isInitialPhase1h = close1h >= swingLow1h and close1h <= ((swingHigh1h - swingLow1h) * 0.33 + swingLow1h)
+isMiddlePhase1h = close1h > ((swingHigh1h - swingLow1h) * 0.33 + swingLow1h) and close1h < ((swingHigh1h - swingLow1h) * 0.67 + swingLow1h)
+isEndPhase1h = close1h >= ((swingHigh1h - swingLow1h) * 0.67 + swingLow1h)
+
+// 1時間足のトレンド判定
+isLongTrend1h = isAboveEMA200_1h and not isNearEMA200_1h
+isShortTrend1h = isBelowEMA200_1h and not isNearEMA200_1h
+
+// =============================================================================
+// 5分足でのEMA配置確認
+// =============================================================================
+
+// ロング条件：10→20→40→80の順で上向き
+isLongEMAOrder = ema10 > ema20 and ema20 > ema40 and ema40 > ema80
+isLongEMASlope = (ema10 - ema10[5]) > 0 and (ema20 - ema20[5]) > 0 and (ema40 - ema40[5]) > 0
+isLongEMASetup = isLongEMAOrder and isLongEMASlope
+
+// ショート条件：80→40→20→10の順で下向き
+isShortEMAOrder = ema10 < ema20 and ema20 < ema40 and ema40 < ema80
+isShortEMASlope = (ema10 - ema10[5]) < 0 and (ema20 - ema20[5]) < 0 and (ema40 - ema40[5]) < 0
+isShortEMASetup = isShortEMAOrder and isShortEMASlope
+
+// ローソク足がEMAを跨いでいないか確認
+isLongEMAPosition = close5m > ema80 and high5m > ema80
+isShortEMAPosition = close5m < ema80 and low5m < ema80
+
+// =============================================================================
+// フィボナッチリトレースメント計算
+// =============================================================================
+
+// ロング用：直近安値→高値でFR計算
+fibRange = swingHigh1h - swingLow1h
+fibLevel1Price = swingHigh1h - (fibRange * fibLevel1 / 100)
+fibLevel2Price = swingHigh1h - (fibRange * fibLevel2 / 100)
+fibLevel3Price = swingHigh1h - (fibRange * fibLevel3 / 100)
+
+// ショート用：直近高値→安値でFR計算
+fibRangeShort = swingHigh1h - swingLow1h
+fibLevel1PriceShort = swingLow1h + (fibRangeShort * fibLevel1 / 100)
+fibLevel2PriceShort = swingLow1h + (fibRangeShort * fibLevel2 / 100)
+fibLevel3PriceShort = swingLow1h + (fibRangeShort * fibLevel3 / 100)
+
+// 調整深さの確認（FR ラインの ±2pips 範囲）
+tolerance = 0.002  // 約2 pips (ドル円の場合)
+isNearFibLevel_Long = (math.abs(close5m - fibLevel1Price) < tolerance * close5m) or
+                      (math.abs(close5m - fibLevel2Price) < tolerance * close5m) or
+                      (math.abs(close5m - fibLevel3Price) < tolerance * close5m)
+
+isNearFibLevel_Short = (math.abs(close5m - fibLevel1PriceShort) < tolerance * close5m) or
+                       (math.abs(close5m - fibLevel2PriceShort) < tolerance * close5m) or
+                       (math.abs(close5m - fibLevel3PriceShort) < tolerance * close5m)
+
+// =============================================================================
+// 押し安値 / 戻り高値の判定
+// =============================================================================
+
+// ロング：押し安値の形成（直近2本で確認）
+recentLow = ta.lowest(low5m, 2)
+recentHigh = ta.highest(high5m, 2)
+isPushLowFormed = recentLow == low5m[1] or recentLow == low5m[0]
+isBodyAboveLow = close5m > low5m[0]  // 実体が安値を割らない
+
+// ショート：戻り高値の形成（直近2本で確認）
+isReturnHighFormed = recentHigh == high5m[1] or recentHigh == high5m[0]
+isBodyBelowHigh = close5m < high5m[0]  // 実体が高値を超えない
+
+// =============================================================================
+// エントリー禁止条件
+// =============================================================================
+
+// EMA が横向き判定
+emaIsFlat = (math.abs(ema10 - ema20) < tolerance * close5m * 0.5) and
+            (math.abs(ema20 - ema40) < tolerance * close5m * 0.5)
+
+// ローソク足が EMA を跨いでいる
+isEMACrossing = (high5m > ema80 and low5m < ema80) or
+                (high5m > ema40 and low5m < ema40) or
+                (high5m > ema20 and low5m < ema20)
+
+// 感情的なトレード判定（連敗フラグは手動で設定）
+emotionalTrade = input.bool(false, "Emotional Trade Flag")
+
+// 禁止条件の統合
+isEntryProhibited = emaIsFlat or isEMACrossing or isEndPhase1h or emotionalTrade
+
+// =============================================================================
+// エントリーシグナル生成
+// =============================================================================
+
+// ロング シグナル
+longSignalCondition = isLongTrend1h and
+                     (isInitialPhase1h or isMiddlePhase1h) and
+                     isLongEMASetup and
+                     isLongEMAPosition and
+                     isPushLowFormed and
+                     isBodyAboveLow and
+                     isNearFibLevel_Long and
+                     not isEntryProhibited
+
+// ショート シグナル
+shortSignalCondition = isShortTrend1h and
+                      (isInitialPhase1h or isMiddlePhase1h) and
+                      isShortEMASetup and
+                      isShortEMAPosition and
+                      isReturnHighFormed and
+                      isBodyBelowHigh and
+                      isNearFibLevel_Short and
+                      not isEntryProhibited
+
+// 現在足と前足の陽線・陰線確認（最終確定）
+isCurrentCandle_Long = close5m > open  // 陽線
+isCurrentCandle_Short = close5m < open  // 陰線
+
+// 最終シグナル（1本前のシグナルと現在足の陽線・陰線を組み合わせ）
+finalLongSignal = longSignalCondition[1] and isCurrentCandle_Long
+finalShortSignal = shortSignalCondition[1] and isCurrentCandle_Short
+
+// =============================================================================
+// チャート描画
+// =============================================================================
+
+// EMA ラインの表示
+if showEMA
+    plot(ema10, "EMA 10", color.new(color.blue, 30), linewidth=1)
+    plot(ema20, "EMA 20", color.new(color.cyan, 30), linewidth=1)
+    plot(ema40, "EMA 40", color.new(color.green, 30), linewidth=1)
+    plot(ema80, "EMA 80", color.new(color.orange, 30), linewidth=1)
+    plot(ema200, "EMA 200", color.new(color.red, 50), linewidth=2)
+
+// Fibonacci ライン（5分足用）
+if showFib
+    hline(fibLevel1Price, "Fib 38.2%", color.new(color.purple, 50), linestyle=hline.style_dashed)
+    hline(fibLevel2Price, "Fib 50.0%", color.new(color.purple, 50), linestyle=hline.style_dashed)
+    hline(fibLevel3Price, "Fib 61.8%", color.new(color.purple, 50), linestyle=hline.style_dashed)
+
+// エントリーシグナル表示
+if showSignals
+    // ロングシグナル（緑の上向き矢印）
+    if finalLongSignal
+        plotshape(finalLongSignal, location=location.belowbar, style=shape.labelup,
+                 size=size.large, color=color.new(color.green, 0),
+                 text="LONG", textcolor=color.white)
+        alert("LONG SIGNAL: " + syminfo.tickerid, alert.freq_once_per_bar_close)
+
+    // ショートシグナル（赤の下向き矢印）
+    if finalShortSignal
+        plotshape(finalShortSignal, location=location.abovebar, style=shape.labeldown,
+                 size=size.large, color=color.new(color.red, 0),
+                 text="SHORT", textcolor=color.white)
+        alert("SHORT SIGNAL: " + syminfo.tickerid, alert.freq_once_per_bar_close)
+
+// =============================================================================
+// インフォパネル
+// =============================================================================
+
+var table infoPanel = table.new(position.top_right, 2, 8, border_color=color.gray,
+                               border_width=1, frame_color=color.gray, frame_width=1)
+
+// パネル更新
+table.cell(infoPanel, 0, 0, "1H Trend", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 0, isLongTrend1h ? "LONG" : (isShortTrend1h ? "SHORT" : "FLAT"),
+          text_color=color.white, bgcolor=isLongTrend1h ? color.new(color.green, 0) :
+                                         (isShortTrend1h ? color.new(color.red, 0) : color.new(color.gray, 0)))
+
+table.cell(infoPanel, 0, 1, "1H Phase", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 1, isInitialPhase1h ? "Initial" : (isMiddlePhase1h ? "Middle" : "End"),
+          text_color=color.white, bgcolor=color.new(color.blue, 0))
+
+table.cell(infoPanel, 0, 2, "5M EMA Setup", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 2, isLongEMASetup ? "✓ LONG" : (isShortEMASetup ? "✓ SHORT" : "✗"),
+          text_color=color.white, bgcolor=isLongEMASetup ? color.new(color.green, 0) :
+                                       (isShortEMASetup ? color.new(color.red, 0) : color.new(color.gray, 0)))
+
+table.cell(infoPanel, 0, 3, "Fib Touch", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 3, isNearFibLevel_Long ? "✓ L-Fib" : (isNearFibLevel_Short ? "✓ S-Fib" : "✗"),
+          text_color=color.white, bgcolor=isNearFibLevel_Long ? color.new(color.green, 0) :
+                                       (isNearFibLevel_Short ? color.new(color.red, 0) : color.new(color.gray, 0)))
+
+table.cell(infoPanel, 0, 4, "Structure", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 4, isPushLowFormed ? "✓ Low" : (isReturnHighFormed ? "✓ High" : "✗"),
+          text_color=color.white, bgcolor=isPushLowFormed ? color.new(color.green, 0) :
+                                       (isReturnHighFormed ? color.new(color.red, 0) : color.new(color.gray, 0)))
+
+table.cell(infoPanel, 0, 5, "Entry OK", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 5, not isEntryProhibited ? "✓ YES" : "✗ PROHIBITED",
+          text_color=color.white, bgcolor=not isEntryProhibited ? color.new(color.green, 0) : color.new(color.red, 0))
+
+table.cell(infoPanel, 0, 6, "Long Ready", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 6, longSignalCondition ? "✓ YES" : "✗",
+          text_color=color.white, bgcolor=longSignalCondition ? color.new(color.green, 0) : color.new(color.gray, 0))
+
+table.cell(infoPanel, 0, 7, "Short Ready", text_color=color.white, bgcolor=color.new(color.navy, 0))
+table.cell(infoPanel, 1, 7, shortSignalCondition ? "✓ YES" : "✗",
+          text_color=color.white, bgcolor=shortSignalCondition ? color.new(color.red, 0) : color.new(color.gray, 0))
