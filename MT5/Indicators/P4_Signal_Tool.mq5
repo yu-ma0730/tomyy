@@ -11,22 +11,22 @@
 #property indicator_plots   10
 
 // EMA buffers
-#property indicator_label1  "EMA10"
+#property indicator_label1  "EMA(10)"
 #property indicator_type1   DRAW_LINE
 #property indicator_color1  clrRed
 #property indicator_width1  2
 
-#property indicator_label2  "EMA20"
+#property indicator_label2  "EMA(20)"
 #property indicator_type2   DRAW_LINE
 #property indicator_color2  clrOrange
 #property indicator_width2  2
 
-#property indicator_label3  "EMA40"
+#property indicator_label3  "EMA(40)"
 #property indicator_type3   DRAW_LINE
 #property indicator_color3  clrGreen
 #property indicator_width3  2
 
-#property indicator_label4  "EMA80"
+#property indicator_label4  "EMA(80)"
 #property indicator_type4   DRAW_LINE
 #property indicator_color4  clrBlue
 #property indicator_width4  2
@@ -127,7 +127,7 @@ int OnInit()
       return INIT_FAILED;
    }
 
-   IndicatorSetString(INDICATOR_SHORTNAME, "P4 Signal Tool (15M)");
+   IndicatorSetString(INDICATOR_SHORTNAME, "P4 Signal Tool - EMA(10,20,40,80) (15M)");
    IndicatorSetInteger(INDICATOR_DIGITS, _Digits);
 
    return INIT_SUCCEEDED;
@@ -167,6 +167,12 @@ int OnCalculate(const int rates_total,
       return 0;
 
    int start = prev_calculated > 0 ? prev_calculated - 1 : Lookback_Bars + 1;
+
+   // Display legend on first calculation
+   if(prev_calculated == 0)
+   {
+      DisplayLegend();
+   }
 
    for(int i = start; i < rates_total; i++)
    {
@@ -215,6 +221,32 @@ int OnCalculate(const int rates_total,
    }
 
    return rates_total;
+}
+
+//+------------------------------------------------------------------+
+//| Display Legend                                                   |
+//+------------------------------------------------------------------+
+void DisplayLegend()
+{
+   // Create legend text
+   string legend_text = "P4 Signal Tool - EMA(10,20,40,80)\n";
+   legend_text += "Red=EMA10  Orange=EMA20  Green=EMA40  Blue=EMA80\n";
+   legend_text += "BB=Bollinger Band  Green Arrow=Long  Red Arrow=Short";
+
+   // Remove old label if exists
+   ObjectDelete(0, "P4_Legend");
+
+   // Create text label
+   ObjectCreate(0, "P4_Legend", OBJ_LABEL, 0, 0, 0);
+   ObjectSetString(0, "P4_Legend", OBJPROP_TEXT, legend_text);
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_XDISTANCE, 10);
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_YDISTANCE, 30);
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_CORNER, CORNER_LEFT_UPPER);
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_FONTSIZE, 9);
+   ObjectSetString(0, "P4_Legend", OBJPROP_FONT, "Arial");
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_COLOR, clrWhiteSmoke);
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_BACK, false);
+   ObjectSetInteger(0, "P4_Legend", OBJPROP_SELECTABLE, false);
 }
 
 //+------------------------------------------------------------------+
@@ -289,6 +321,9 @@ void OnDeinit(const int reason)
    ReleaseBufHandle(ema40_handle);
    ReleaseBufHandle(ema80_handle);
    ReleaseBufHandle(bb_handle);
+
+   // Remove legend on deinitialization
+   ObjectDelete(0, "P4_Legend");
 }
 
 //+------------------------------------------------------------------+
