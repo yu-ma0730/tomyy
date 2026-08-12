@@ -1,10 +1,11 @@
 //+------------------------------------------------------------------+
-//| P4 Signal Tool for MT5                                           |
-//| FX P4 Perfect Order Trend Trading Strategy                       |
+//| P4手法 - パーフェクトオーダーシグナルツール                        |
+//| FX P4 Perfect Order Trend Trading Strategy for MT5                |
 //+------------------------------------------------------------------+
 #property copyright "P4 Trading System"
 #property link      "https://fx-trading-p4.local"
 #property version   "1.00"
+#property description "P4手法 - EMA(10,20,40,80)パーフェクトオーダー判定ツール"
 #property strict
 #property indicator_chart_window
 #property indicator_buffers 10
