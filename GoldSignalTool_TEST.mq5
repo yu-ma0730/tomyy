@@ -10,7 +10,6 @@
 #property indicator_color1  clrBlue
 #property indicator_width1  2
 #property indicator_label1  "Close Price"
-#property indicator_short_name "Gold_TEST_v1"
 
 double TestBuffer[];
 
