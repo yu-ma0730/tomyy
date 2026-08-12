@@ -72,9 +72,12 @@ int OnCalculate(const int rates_total,
 {
    if(rates_total < EMA_200 + 10) return rates_total;
 
-   int start = prev_calculated > 0 ? prev_calculated - 1 : 0;
+   int start = 0;
+   if(prev_calculated > 0)
+      start = prev_calculated - 1;
 
-   for(int i = start; i < rates_total; i++)
+   // Process bars from oldest to newest, skip unclosed current bar (index 0)
+   for(int i = rates_total - 1; i > 0 && i >= start; i--)
    {
       BuySignal[i] = 0;
       SellSignal[i] = 0;
@@ -83,7 +86,7 @@ int OnCalculate(const int rates_total,
       if(CheckBuySignal(i))
       {
          BuySignal[i] = low[i] - 50 * Point();
-         if(i > lastBuyBar)
+         if(i != lastBuyBar)
          {
             lastBuyBar = i;
             if(EnableAlert)
@@ -97,7 +100,7 @@ int OnCalculate(const int rates_total,
       if(CheckSellSignal(i))
       {
          SellSignal[i] = high[i] + 50 * Point();
-         if(i > lastSellBar)
+         if(i != lastSellBar)
          {
             lastSellBar = i;
             if(EnableAlert)
@@ -215,8 +218,12 @@ bool CheckSellSignal(int bar)
 //+------------------------------------------------------------------+
 bool IsH1Calm(int bar)
 {
+   // Need enough H1 bars to check
+   if(bar + 2 >= iBars(Symbol(), PERIOD_H1))
+      return false;
+
    // Check last 3 H1 bars for calmness
-   for(int i = bar; i < bar + 3 && i < iBars(Symbol(), PERIOD_H1); i++)
+   for(int i = bar; i <= bar + 2; i++)
    {
       double h1_open = iOpen(Symbol(), PERIOD_H1, i);
       double h1_close = iClose(Symbol(), PERIOD_H1, i);
@@ -258,6 +265,10 @@ bool IsH1Calm(int bar)
 //+------------------------------------------------------------------+
 bool CheckPushLowFormation(int bar)
 {
+   // Need at least 3 bars available (bar, bar+1, bar+2)
+   if(bar + 2 >= iBars(Symbol(), PERIOD_M5))
+      return false;
+
    double m5_low_0 = iLow(Symbol(), PERIOD_M5, bar);
    double m5_low_1 = iLow(Symbol(), PERIOD_M5, bar + 1);
    double m5_low_2 = iLow(Symbol(), PERIOD_M5, bar + 2);
@@ -286,6 +297,10 @@ bool CheckPushLowFormation(int bar)
 //+------------------------------------------------------------------+
 bool CheckRetracementHighFormation(int bar)
 {
+   // Need at least 3 bars available (bar, bar+1, bar+2)
+   if(bar + 2 >= iBars(Symbol(), PERIOD_M5))
+      return false;
+
    double m5_high_0 = iHigh(Symbol(), PERIOD_M5, bar);
    double m5_high_1 = iHigh(Symbol(), PERIOD_M5, bar + 1);
    double m5_high_2 = iHigh(Symbol(), PERIOD_M5, bar + 2);
