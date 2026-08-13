@@ -131,6 +131,9 @@ int OnInit()
    IndicatorSetString(INDICATOR_SHORTNAME, "P4手法 - EMA(10,20,40,80)");
    IndicatorSetInteger(INDICATOR_DIGITS, _Digits);
 
+   // Set chart name to avoid confusion
+   ChartSetString(0, CHART_COMMENT, "P4手法 パーフェクトオーダー");
+
    return INIT_SUCCEEDED;
 }
 
