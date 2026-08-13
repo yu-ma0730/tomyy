@@ -19,11 +19,7 @@ P4手法は、EMAの完全注文（Perfect Order）形成時にトレンド方�
 ```
 MT5/
 ├── Indicators/
-│   └── P4_Signal_Tool.mq5          # メインインジケーター
-├── Experts/
-│   └── P4_TradeManager.mq5         # 自動取引EA
-├── Scripts/
-│   └── (パフォーマンス分析用)
+│   └── P4_Signal_Tool.mq5          # P4シグナルツール（BBとシグナル表示）
 ├── P4_Installation_Guide.md        # インストール・使用ガイド
 ├── Technical_Specification.md      # 技術仕様書
 ├── README.md                       # このファイル
@@ -41,15 +37,8 @@ MT5/
 4. シグナルを確認して手動取引
 ```
 
-### 2. 自動取引（EA使用）
-
-```bash
-1. P4_TradeManager.mq5 をMT5にコピー
-2. チャートに追加
-3. AutoTrading = true に設定
-4. 「取引可能」をチェック
-5. EA実行開始
-```
+### 注意
+このツールはシグナル表示のみです。EMA(10,20,40,80)は別途ご自身で追加してください。
 
 ## 🎯 シグナル説明
 
@@ -74,15 +63,13 @@ Lookback_Bars = 5         # ウィック判定期間
 Use_BB_Filter = true      # BBフィルター有効
 ```
 
-### EA設定（P4_TradeManager.mq5）
+### インジケーター設定（P4_Signal_Tool.mq5）
 
 ```
-Magic = 12345             # マジックナンバー
-LotSize = 0.1             # ロット数
-AutoTrading = false       # 自動取引有効/無効
-RiskRewardRatio = 1.0     # RR比（1:1推奨）
+BB_Period = 20            # ボリンジャーバンド期間
+BB_Deviation = 2.0        # BB標準偏差
+Lookback_Bars = 5         # ウィック判定期間
 Use_BB_Filter = true      # BBフィルター有効
-RiskPercent = 1.0         # リスク率（%）
 ```
 
 ## 📊 パフォーマンス（バックテスト結果）

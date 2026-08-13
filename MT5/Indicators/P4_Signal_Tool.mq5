@@ -4,89 +4,54 @@
 //+------------------------------------------------------------------+
 #property copyright "P4 Trading System"
 #property link      "https://fx-trading-p4.local"
-#property version   "1.00"
-#property description "P4手法 - EMA(10,20,40,80)パーフェクトオーダー判定ツール"
+#property version   "2.00"
+#property description "P4手法 - ボリンジャーバンド＆シグナル表示ツール"
 #property strict
 #property indicator_chart_window
-#property indicator_buffers 10
-#property indicator_plots   10
-
-// EMA buffers
-#property indicator_label1  "EMA(10)"
-#property indicator_type1   DRAW_LINE
-#property indicator_color1  clrRed
-#property indicator_width1  2
-
-#property indicator_label2  "EMA(20)"
-#property indicator_type2   DRAW_LINE
-#property indicator_color2  clrOrange
-#property indicator_width2  2
-
-#property indicator_label3  "EMA(40)"
-#property indicator_type3   DRAW_LINE
-#property indicator_color3  clrGreen
-#property indicator_width3  2
-
-#property indicator_label4  "EMA(80)"
-#property indicator_type4   DRAW_LINE
-#property indicator_color4  clrBlue
-#property indicator_width4  2
+#property indicator_buffers 5
+#property indicator_plots   5
 
 // BB buffers
-#property indicator_label5  "BB Upper"
-#property indicator_type5   DRAW_LINE
-#property indicator_color5  clrGray
-#property indicator_width5  1
-#property indicator_style5  STYLE_DOT
+#property indicator_label1  "BB Upper"
+#property indicator_type1   DRAW_LINE
+#property indicator_color1  clrGray
+#property indicator_width1  1
+#property indicator_style1  STYLE_DOT
 
-#property indicator_label6  "BB Lower"
-#property indicator_type6   DRAW_LINE
-#property indicator_color6  clrGray
-#property indicator_width6  1
-#property indicator_style6  STYLE_DOT
+#property indicator_label2  "BB Lower"
+#property indicator_type2   DRAW_LINE
+#property indicator_color2  clrGray
+#property indicator_width2  1
+#property indicator_style2  STYLE_DOT
 
-#property indicator_label7  "BB Middle"
-#property indicator_type7   DRAW_LINE
-#property indicator_color7  clrGray
-#property indicator_width7  1
+#property indicator_label3  "BB Middle"
+#property indicator_type3   DRAW_LINE
+#property indicator_color3  clrGray
+#property indicator_width3  1
 
 // Signal buffers
-#property indicator_label8  "Long Entry"
-#property indicator_type8   DRAW_ARROW
-#property indicator_color8  clrLime
-#property indicator_width8  2
+#property indicator_label4  "Long Entry"
+#property indicator_type4   DRAW_ARROW
+#property indicator_color4  clrLime
+#property indicator_width4  2
 
-#property indicator_label9  "Short Entry"
-#property indicator_type9   DRAW_ARROW
-#property indicator_color9  clrRed
-#property indicator_width9  2
-
-#property indicator_label10 "Perfect Order"
-#property indicator_type10  DRAW_HISTOGRAM
-#property indicator_color10 clrLightBlue
-#property indicator_width10 1
+#property indicator_label5  "Short Entry"
+#property indicator_type5   DRAW_ARROW
+#property indicator_color5  clrRed
+#property indicator_width5  2
 
 // Buffers
-double ema10_buf[], ema20_buf[], ema40_buf[], ema80_buf[];
 double bb_upper_buf[], bb_lower_buf[], bb_middle_buf[];
-double long_entry_buf[], short_entry_buf[], po_buf[];
+double long_entry_buf[], short_entry_buf[];
 
 // Input parameters
-input int EMA10_Period = 10;
-input int EMA20_Period = 20;
-input int EMA40_Period = 40;
-input int EMA80_Period = 80;
 input int BB_Period = 20;
 input double BB_Deviation = 2.0;
 input int Lookback_Bars = 5;
-input bool Show_PerfectOrder_Info = true;
 input bool Use_BB_Filter = true;
 
 // Global variables
-int ema10_handle, ema20_handle, ema40_handle, ema80_handle;
 int bb_handle;
-bool po_long_active = false;
-bool po_short_active = false;
 
 //+------------------------------------------------------------------+
 //| Custom indicator initialization function                         |
@@ -94,41 +59,30 @@ bool po_short_active = false;
 int OnInit()
 {
    // Set buffer pointers and labels
-   SetIndexBuffer(0, ema10_buf, INDICATOR_DATA);
-   SetIndexBuffer(1, ema20_buf, INDICATOR_DATA);
-   SetIndexBuffer(2, ema40_buf, INDICATOR_DATA);
-   SetIndexBuffer(3, ema80_buf, INDICATOR_DATA);
-   SetIndexBuffer(4, bb_upper_buf, INDICATOR_DATA);
-   SetIndexBuffer(5, bb_lower_buf, INDICATOR_DATA);
-   SetIndexBuffer(6, bb_middle_buf, INDICATOR_DATA);
-   SetIndexBuffer(7, long_entry_buf, INDICATOR_DATA);
-   SetIndexBuffer(8, short_entry_buf, INDICATOR_DATA);
-   SetIndexBuffer(9, po_buf, INDICATOR_DATA);
+   SetIndexBuffer(0, bb_upper_buf, INDICATOR_DATA);
+   SetIndexBuffer(1, bb_lower_buf, INDICATOR_DATA);
+   SetIndexBuffer(2, bb_middle_buf, INDICATOR_DATA);
+   SetIndexBuffer(3, long_entry_buf, INDICATOR_DATA);
+   SetIndexBuffer(4, short_entry_buf, INDICATOR_DATA);
 
-   // Create handles for technical indicators
-   ema10_handle = iMA(_Symbol, _Period, EMA10_Period, 0, MODE_EMA, PRICE_CLOSE);
-   ema20_handle = iMA(_Symbol, _Period, EMA20_Period, 0, MODE_EMA, PRICE_CLOSE);
-   ema40_handle = iMA(_Symbol, _Period, EMA40_Period, 0, MODE_EMA, PRICE_CLOSE);
-   ema80_handle = iMA(_Symbol, _Period, EMA80_Period, 0, MODE_EMA, PRICE_CLOSE);
+   // Create handle for Bollinger Bands
    bb_handle = iBands(_Symbol, _Period, BB_Period, 0, BB_Deviation, PRICE_CLOSE);
 
-   if(ema10_handle == INVALID_HANDLE || ema20_handle == INVALID_HANDLE ||
-      ema40_handle == INVALID_HANDLE || ema80_handle == INVALID_HANDLE ||
-      bb_handle == INVALID_HANDLE)
+   if(bb_handle == INVALID_HANDLE)
    {
-      Print("Error creating indicator handles");
+      Print("Error creating Bollinger Bands handle");
       return INIT_FAILED;
    }
 
    // Set indicator to 15M only
    if(_Period != PERIOD_M15)
    {
-      Alert("This indicator works only on 15-minute timeframe. Current timeframe: ",
+      Alert("このインジケーターは15分足専用です。現在の時間足: ",
             EnumToString(_Period));
       return INIT_FAILED;
    }
 
-   IndicatorSetString(INDICATOR_SHORTNAME, "P4手法 - EMA(10,20,40,80)");
+   IndicatorSetString(INDICATOR_SHORTNAME, "P4手法 シグナル");
    IndicatorSetInteger(INDICATOR_DIGITS, _Digits);
 
    // Set chart name to avoid confusion
@@ -154,15 +108,7 @@ int OnCalculate(const int rates_total,
    if(rates_total < 100)
       return 0;
 
-   // Copy indicator values
-   if(CopyBuffer(ema10_handle, 0, 0, rates_total, ema10_buf) <= 0)
-      return 0;
-   if(CopyBuffer(ema20_handle, 0, 0, rates_total, ema20_buf) <= 0)
-      return 0;
-   if(CopyBuffer(ema40_handle, 0, 0, rates_total, ema40_buf) <= 0)
-      return 0;
-   if(CopyBuffer(ema80_handle, 0, 0, rates_total, ema80_buf) <= 0)
-      return 0;
+   // Copy Bollinger Bands values
    if(CopyBuffer(bb_handle, 1, 0, rates_total, bb_upper_buf) <= 0)
       return 0;
    if(CopyBuffer(bb_handle, 2, 0, rates_total, bb_lower_buf) <= 0)
@@ -180,47 +126,19 @@ int OnCalculate(const int rates_total,
 
    for(int i = start; i < rates_total; i++)
    {
-      // Check Perfect Order conditions
-      po_buf[i] = 0;
       long_entry_buf[i] = EMPTY_VALUE;
       short_entry_buf[i] = EMPTY_VALUE;
 
-      // Perfect Order Long: EMA10 > EMA20 > EMA40 > EMA80
-      if(ema10_buf[i] > ema20_buf[i] &&
-         ema20_buf[i] > ema40_buf[i] &&
-         ema40_buf[i] > ema80_buf[i])
+      // Check for potential long entry (price near lower BB)
+      if(CheckLongSignal(i, close, high, low))
       {
-         po_long_active = true;
-         po_buf[i] = 1;
-
-         // Check for entry signal
-         if(CheckLongEntry(i, close, high, low))
-         {
-            long_entry_buf[i] = low[i] - 0.0002 * _Point;
-         }
-      }
-      else
-      {
-         po_long_active = false;
+         long_entry_buf[i] = low[i] - 0.0002 * _Point;
       }
 
-      // Perfect Order Short: EMA80 > EMA40 > EMA20 > EMA10
-      if(ema80_buf[i] > ema40_buf[i] &&
-         ema40_buf[i] > ema20_buf[i] &&
-         ema20_buf[i] > ema10_buf[i])
+      // Check for potential short entry (price near upper BB)
+      if(CheckShortSignal(i, close, high, low))
       {
-         po_short_active = true;
-         po_buf[i] = -1;
-
-         // Check for entry signal
-         if(CheckShortEntry(i, close, high, low))
-         {
-            short_entry_buf[i] = high[i] + 0.0002 * _Point;
-         }
-      }
-      else
-      {
-         po_short_active = false;
+         short_entry_buf[i] = high[i] + 0.0002 * _Point;
       }
    }
 
@@ -233,9 +151,10 @@ int OnCalculate(const int rates_total,
 void DisplayLegend()
 {
    // Create legend text
-   string legend_text = "P4手法 - EMA(10,20,40,80) パーフェクトオーダー\n";
-   legend_text += "赤=EMA10  橙=EMA20  緑=EMA40  青=EMA80\n";
-   legend_text += "BB=ボリンジャーバンド  緑矢印=ロング  赤矢印=ショート";
+   string legend_text = "P4手法 シグナルツール\n";
+   legend_text += "15分足専用 - EMA別途追加が必要\n";
+   legend_text += "BB=ボリンジャーバンド\n";
+   legend_text += "緑矢印=ロングシグナル  赤矢印=ショートシグナル";
 
    // Remove old label if exists
    ObjectDelete(0, "P4_Legend");
@@ -254,9 +173,9 @@ void DisplayLegend()
 }
 
 //+------------------------------------------------------------------+
-//| Check Long Entry Signal                                          |
+//| Check Long Signal                                                |
 //+------------------------------------------------------------------+
-bool CheckLongEntry(int bar, const double &close[], const double &high[], const double &low[])
+bool CheckLongSignal(int bar, const double &close[], const double &high[], const double &low[])
 {
    if(bar < 2)
       return false;
@@ -269,7 +188,7 @@ bool CheckLongEntry(int bar, const double &close[], const double &high[], const 
          wick_high = high[bar-i];
    }
 
-   // Entry when price breaks above wick
+   // Entry signal when price breaks above wick
    if(close[bar] > wick_high && close[bar-1] <= wick_high)
    {
       // BB Filter: avoid entry if price is far outside BB
@@ -285,9 +204,9 @@ bool CheckLongEntry(int bar, const double &close[], const double &high[], const 
 }
 
 //+------------------------------------------------------------------+
-//| Check Short Entry Signal                                         |
+//| Check Short Signal                                               |
 //+------------------------------------------------------------------+
-bool CheckShortEntry(int bar, const double &close[], const double &high[], const double &low[])
+bool CheckShortSignal(int bar, const double &close[], const double &high[], const double &low[])
 {
    if(bar < 2)
       return false;
@@ -300,7 +219,7 @@ bool CheckShortEntry(int bar, const double &close[], const double &high[], const
          wick_low = low[bar-i];
    }
 
-   // Entry when price breaks below wick
+   // Entry signal when price breaks below wick
    if(close[bar] < wick_low && close[bar-1] >= wick_low)
    {
       // BB Filter: avoid entry if price is far outside BB
@@ -320,10 +239,6 @@ bool CheckShortEntry(int bar, const double &close[], const double &high[], const
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-   ReleaseBufHandle(ema10_handle);
-   ReleaseBufHandle(ema20_handle);
-   ReleaseBufHandle(ema40_handle);
-   ReleaseBufHandle(ema80_handle);
    ReleaseBufHandle(bb_handle);
 
    // Remove legend on deinitialization
