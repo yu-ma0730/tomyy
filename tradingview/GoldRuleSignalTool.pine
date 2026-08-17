@@ -1,0 +1,150 @@
+//@version=5
+indicator("Gold Regularity Signal Tool", overlay=true, max_bars_back=200)
+
+// ============================================
+// SETTINGS
+// ============================================
+enableAlerts = input.bool(true, "Enable Alerts", group="Alerts")
+enableNotifications = input.bool(false, "Enable Notifications", group="Alerts")
+upSignalColor = input.color(color.new(color.green, 0), "UP Signal Color", group="Display")
+downSignalColor = input.color(color.new(color.red, 0), "DOWN Signal Color", group="Display")
+signalSize = input.int(2, "Signal Arrow Size", group="Display")
+emaColorAlerts = input.color(color.new(color.orange, 80), "EMA Alert Zone Color", group="Display")
+
+// ============================================
+// EMA CALCULATIONS
+// ============================================
+ema10 = ta.ema(close, 10)
+ema20 = ta.ema(close, 20)
+ema40 = ta.ema(close, 40)
+ema80 = ta.ema(close, 80)
+
+// ============================================
+// SIGNAL DETECTION LOGIC
+// ============================================
+
+// Rule #1: EMA touched in sequence from top to bottom
+isEma10Touched = math.abs(close - ema10) / ema10 < 0.002
+isEma20Touched = math.abs(close - ema20) / ema20 < 0.003
+isEma40Touched = math.abs(close - ema40) / ema40 < 0.003
+isEma80Touched = math.abs(close - ema80) / ema80 < 0.004
+
+// Rule #2: Price breaks below EMA (SHORT signal)
+ema10Downbreak = close < ema10 and close[1] >= ema10[1]
+ema20Downbreak = close < ema20 and close[1] >= ema20[1]
+ema40Downbreak = close < ema40 and close[1] >= ema40[1]
+
+// Rule #3: EMA20 Multiple Bounce Detection
+ema20BounceBuffer = 0
+ema20BounceBuffer := (math.abs(close - ema20) / ema20 < 0.005) ? ema20BounceBuffer[1] + 1 : 0
+isEma20MultiBounce = ema20BounceBuffer >= 2 and close > ema20 and close[1] < ema20[1]
+
+// ============================================
+// PRIMARY SIGNALS
+// ============================================
+
+// SHORT Signal: EMA10 downbreak (strongest)
+shortSignalEma10 = ema10Downbreak and not (close > ema20)
+
+// SHORT Signal: EMA20 downbreak after EMA10 confirmed
+shortSignalEma20 = ema20Downbreak and ema10Downbreak[1]
+
+// LONG Signal: Recovery at EMA20 (reversal setup)
+longSignalEma20 = isEma20MultiBounce and close > ema20
+
+// LONG Signal: Price retesting support at lower EMA
+longSignalSupport = (close > ema20 and close < ema10) and close[1] < close
+
+// ============================================
+// PERFECT ORDER CHECK (Trend Confirmation)
+// ============================================
+isUptrendPerfectOrder = close > ema10 and ema10 > ema20 and ema20 > ema40 and ema40 > ema80
+isDowntrendPerfectOrder = close < ema10 and ema10 < ema20 and ema20 < ema40 and ema40 < ema80
+
+// ============================================
+// SIGNAL PLOTS
+// ============================================
+plotshape(shortSignalEma10, title="SHORT (EMA10 Break)", location=location.abovebar,
+          color=downSignalColor, style=shape.arrowdown, size=size.small)
+
+plotshape(shortSignalEma20, title="SHORT (EMA20 Target)", location=location.abovebar,
+          color=downSignalColor, style=shape.arrowdown, size=size.tiny)
+
+plotshape(longSignalEma20, title="LONG (EMA20 Bounce)", location=location.belowbar,
+          color=upSignalColor, style=shape.arrowup, size=size.small)
+
+plotshape(longSignalSupport, title="LONG (Support)", location=location.belowbar,
+          color=upSignalColor, style=shape.arrowup, size=size.tiny)
+
+// ============================================
+// EMA ZONE HIGHLIGHTS
+// ============================================
+// Highlight danger zone (when close is near EMA20 after downbreak)
+isDangerZone = (close < ema20 and close > ema40) and ema10Downbreak[1]
+plotshape(isDangerZone, title="DANGER ZONE (EMA20-40)", location=location.abovebar,
+          color=color.new(color.orange, 95), style=shape.circle, size=size.tiny)
+
+// Highlight final reversal zone (EMA80)
+isFinalZone = math.abs(close - ema80) / ema80 < 0.005 and isDowntrendPerfectOrder
+plotshape(isFinalZone, title="FINAL SUPPORT (EMA80)", location=location.belowbar,
+          color=color.new(color.blue, 90), style=shape.diamond, size=size.small)
+
+// ============================================
+// ALERTS
+// ============================================
+if enableAlerts
+    if shortSignalEma10
+        alert("🔴 GOLD SHORT: EMA10 Downbreak - Target EMA20", alert.freq_once_per_bar)
+    if shortSignalEma20
+        alert("⏬ GOLD SHORT: EMA20 Confirmed Target", alert.freq_once_per_bar)
+    if longSignalEma20
+        alert("🟢 GOLD LONG: EMA20 Bounce Signal", alert.freq_once_per_bar)
+    if isEma20MultiBounce
+        alert("⚠️ GOLD: EMA20 Multiple Bounce - High Probability Zone", alert.freq_once_per_bar)
+
+if enableNotifications
+    if shortSignalEma10
+        runtime.openConfirm("SHORT Signal on GOLD", "EMA10 downbreak detected. Target: EMA20")
+    if longSignalEma20
+        runtime.openConfirm("LONG Signal on GOLD", "EMA20 bounce detected")
+
+// ============================================
+// INFO TABLE (Strategy Rules)
+// ============================================
+var table infoTable = table.new(position.top_right, 3, 6, bgcolor=color.new(color.navy, 95))
+
+table.cell(infoTable, 0, 0, "GOLD REGULARITY RULES", text_color=color.white, bgcolor=color.navy)
+table.cell(infoTable, 1, 0, "Status", text_color=color.white, bgcolor=color.navy)
+table.cell(infoTable, 2, 0, "", text_color=color.white, bgcolor=color.navy)
+
+ruleStatus1 = isUptrendPerfectOrder ? "🟢" : isDowntrendPerfectOrder ? "🔴" : "⚫"
+table.cell(infoTable, 0, 1, "Rule #1: Perfect Order", text_color=color.white)
+table.cell(infoTable, 1, 1, ruleStatus1, text_color=color.white)
+
+ruleStatus2 = ema10Downbreak ? "🔴 Break" : isEma10Touched ? "🟡" : "⚫"
+table.cell(infoTable, 0, 2, "Rule #2: EMA Breaks", text_color=color.white)
+table.cell(infoTable, 1, 2, ruleStatus2, text_color=color.white)
+
+ruleStatus3 = ema20BounceBuffer > 0 ? "🟢 Bouncing" : "⚫"
+table.cell(infoTable, 0, 3, "Rule #3: EMA20 Bounces", text_color=color.white)
+table.cell(infoTable, 1, 3, ruleStatus3, text_color=color.white)
+
+upTrendText = isUptrendPerfectOrder ? "✓ UPTREND" : "✗ No"
+table.cell(infoTable, 0, 4, "Uptrend Perfect Order", text_color=color.white)
+table.cell(infoTable, 1, 4, upTrendText, text_color=color.new(color.green, 0))
+
+downTrendText = isDowntrendPerfectOrder ? "✓ DOWNTREND" : "✗ No"
+table.cell(infoTable, 0, 5, "Downtrend Perfect Order", text_color=color.white)
+table.cell(infoTable, 1, 5, downTrendText, text_color=color.new(color.red, 0))
+
+// ============================================
+// STATISTICS
+// ============================================
+// Count signals in session
+var int shortCount = 0
+var int longCount = 0
+
+if shortSignalEma10 or shortSignalEma20
+    shortCount += 1
+if longSignalEma20 or longSignalSupport
+    longCount += 1
