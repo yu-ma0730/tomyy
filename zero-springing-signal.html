@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゼロスプリング手法 FXサインツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-reset {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .btn-reset:hover {
+            background: #dee2e6;
+        }
+
+        .btn-export {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #218838;
+        }
+
+        /* Result Display */
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .signal-card {
+            padding: 25px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 5px solid #ccc;
+        }
+
+        .signal-card.entry {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #d4edda 0%, #e8f5e9 100%);
+        }
+
+        .signal-card.waiting {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fff3cd 0%, #fffbf0 100%);
+        }
+
+        .signal-card.no-signal {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #f8d7da 0%, #fff5f5 100%);
+        }
+
+        .signal-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .signal-card.entry .signal-title {
+            color: #155724;
+        }
+
+        .signal-card.waiting .signal-title {
+            color: #856404;
+        }
+
+        .signal-card.no-signal .signal-title {
+            color: #721c24;
+        }
+
+        .signal-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .trend-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .trend-status.up {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .trend-status.down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .trend-status.neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .targets-grid {
+            display: grid;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .target {
+            padding: 12px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .target-label {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .target-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .risk-reward {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .risk-reward-label {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .risk-reward-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .checklist {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .checklist-icon.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .checklist-icon.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .checklist-icon.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .checklist-text {
+            flex: 1;
+            font-size: 0.95em;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            color: #856404;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .grid, .results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .beginner-mode {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .mode-label {
+            font-size: 0.85em;
+            color: #1565c0;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 ゼロスプリング手法</h1>
+            <p>FXトレーディングシグナルツール</p>
+        </header>
+
+        <div class="content">
+            <div class="grid">
+                <!-- 4時間足データ入力 -->
+                <div class="card">
+                    <h3>📊 4時間足分析</h3>
+
+                    <div class="form-group">
+                        <label>通貨ペア</label>
+                        <select id="currencyPair">
+                            <option value="EURUSD">EUR/USD</option>
+                            <option value="GBPUSD">GBP/USD</option>
+                            <option value="USDJPY">USD/JPY</option>
+                            <option value="GOLD">Gold</option>
+                            <option value="CUSTOM">カスタム</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>直近3本の高値（最新順）</label>
+                        <input type="number" id="h1" placeholder="高値 3本目" step="0.0001">
+                        <input type="number" id="h2" placeholder="高値 2本目" step="0.0001">
+                        <input type="number" id="h3" placeholder="高値 1本目（最新）" step="0.0001">
+                    </div>
+
+                    <div class="form-group">
+                        <label>直近3本の安値</label>
+                        <input type="number" id="l1" placeholder="安値 3本目" step="0.0001">
+                        <input type="number" id="l2" placeholder="安値 2本目" step="0.0001">
+                        <input type="number" id="l3" placeholder="安値 1本目（最新）" step="0.0001">
+                    </div>
+
+                    <div class="form-group">
+                        <label>直近3本の終値</label>
+                        <input type="number" id="c1" placeholder="終値 3本目" step="0.0001">
+                        <input type="number" id="c2" placeholder="終値 2本目" step="0.0001">
+                        <input type="number" id="c3" placeholder="終値 1本目（最新）" step="0.0001">
+                    </div>
+                </div>
+
+                <!-- 15分足 & RCIデータ入力 -->
+                <div class="card">
+                    <h3>⏱️ 15分足 & RCI分析</h3>
+
+                    <div class="form-group">
+                        <label>15分足 現在価格</label>
+                        <input type="number" id="price15m" placeholder="例: 1.0950" step="0.0001">
+                    </div>
+
+                    <div class="form-group">
+                        <label>15分足 直近5本の安値（押し目確認用）</label>
+                        <input type="number" id="low15m1" placeholder="安値 5本目" step="0.0001">
+                        <input type="number" id="low15m2" placeholder="安値 4本目" step="0.0001">
+                        <input type="number" id="low15m3" placeholder="安値 3本目" step="0.0001">
+                        <input type="number" id="low15m4" placeholder="安値 2本目" step="0.0001">
+                        <input type="number" id="low15m5" placeholder="安値 1本目（最新）" step="0.0001">
+                    </div>
+
+                    <div class="form-group">
+                        <label>RCI 現在値 (%)</label>
+                        <input type="number" id="rciCurrent" placeholder="例: 5.0" step="0.1" min="-100" max="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>RCI 前足の値 (%)</label>
+                        <input type="number" id="rciPrevious" placeholder="例: -35.0" step="0.1" min="-100" max="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="beginnerMode">
+                            初心者向けモード（固定ルール: SL-50pips, TP+100pips）
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ボタン -->
+            <div class="button-group">
+                <button class="btn-analyze" onclick="analyzeSignal()">📈 シグナル分析を実行</button>
+                <button class="btn-reset" onclick="resetForm()">🔄 リセット</button>
+            </div>
+
+            <!-- 結果表示エリア -->
+            <div id="resultsContainer" style="display:none; margin-top:30px;">
+                <div class="results">
+                    <!-- 主要シグナル -->
+                    <div id="signalDisplay" class="signal-card no-signal">
+                        <div class="signal-title">-</div>
+                        <div class="signal-subtitle">-</div>
+                    </div>
+
+                    <!-- トレンド分析 -->
+                    <div class="card">
+                        <h3>📍 トレンド確認状況</h3>
+                        <div id="trendAnalysis"></div>
+                    </div>
+                </div>
+
+                <!-- RCI分析と詳細 -->
+                <div id="detailsContainer" style="display:none; margin-top: 30px;">
+                    <div class="results full-width">
+                        <div class="card">
+                            <h3>📊 RCI分析詳細</h3>
+                            <div id="rciDetails"></div>
+                        </div>
+
+                        <div class="card">
+                            <h3>💰 エントリー情報</h3>
+                            <div id="entryDetails"></div>
+                        </div>
+                    </div>
+
+                    <!-- 全体サマリー -->
+                    <div id="summaryContainer" style="display:none; margin-top: 30px;">
+                        <div class="card full-width">
+                            <h3>📋 取引サマリー</h3>
+                            <div id="summary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ガイダンスセクション -->
+            <div class="card full-width" style="margin-top:30px;">
+                <h3>📚 使用方法ガイド</h3>
+                <div class="summary">
+                    <strong>ゼロスプリング手法の流れ:</strong>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>STEP1:</strong> 4時間足で上昇トレンドを確認（高値・安値が切り上がっている）</li>
+                        <li><strong>STEP2:</strong> 15分足でRCIが-30%～-60%に下がるのを待つ</li>
+                        <li><strong>STEP3:</strong> RCIが0ラインを上抜けするのを待つ（これが主要シグナル）</li>
+                        <li><strong>STEP4:</strong> 次の足の始値でロングエントリー</li>
+                        <li><strong>利確:</strong> 利確1（50%)と利確2（50%)に分割決済</li>
+                    </ol>
+
+                    <strong style="display:block; margin-top:15px;">⚠️ 重要な注意点:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>4時間足の確認を絶対にスキップしない（最大の失敗原因）</li>
+                        <li>RCIの0ラインクロスは短期的なシグナルに過ぎない</li>
+                        <li>浅い押し目からでもチャンスがある（過度に厳しい条件は不要）</li>
+                        <li>初心者は固定ルール（-50pips / +100pips）から始めるのがおすすめ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function analyzeSignal() {
+            // 入力値の取得
+            const h1 = parseFloat(document.getElementById('h1').value);
+            const h2 = parseFloat(document.getElementById('h2').value);
+            const h3 = parseFloat(document.getElementById('h3').value);
+            const l1 = parseFloat(document.getElementById('l1').value);
+            const l2 = parseFloat(document.getElementById('l2').value);
+            const l3 = parseFloat(document.getElementById('l3').value);
+            const c1 = parseFloat(document.getElementById('c1').value);
+            const c2 = parseFloat(document.getElementById('c2').value);
+            const c3 = parseFloat(document.getElementById('c3').value);
+
+            const price15m = parseFloat(document.getElementById('price15m').value);
+            const rciCurrent = parseFloat(document.getElementById('rciCurrent').value);
+            const rciPrevious = parseFloat(document.getElementById('rciPrevious').value);
+            const beginnerMode = document.getElementById('beginnerMode').checked;
+
+            // 入力値の検証
+            if (![h1, h2, h3, l1, l2, l3, c1, c2, c3, price15m, rciCurrent, rciPrevious].every(v => !isNaN(v))) {
+                alert('すべてのフィールドに数値を入力してください');
+                return;
+            }
+
+            // 4時間足トレンド分析
+            const trendAnalysis = analyze4HourTrend(
+                { h: h1, l: l1, c: c1 },
+                { h: h2, l: l2, c: c2 },
+                { h: h3, l: l3, c: c3 }
+            );
+
+            // RCI分析
+            const rciAnalysis = analyzeRCI(rciCurrent, rciPrevious);
+
+            // エントリーシグナル
+            let signalStatus = 'no-signal';
+            let signalTitle = 'シグナルなし';
+            let signalMessage = 'エントリー条件を満たしていません';
+
+            if (trendAnalysis.isUptrend && rciAnalysis.isCrossingZeroUp) {
+                signalStatus = 'entry';
+                signalTitle = '✅ ロングエントリーシグナル';
+                signalMessage = '条件をすべて満たしました - エントリー準備完了';
+            } else if (trendAnalysis.isUptrend && rciAnalysis.isNegative) {
+                signalStatus = 'waiting';
+                signalTitle = '⏳ トレンド確認完了';
+                signalMessage = 'RCIの0ラインクロスを待機中...';
+            } else if (!trendAnalysis.isUptrend) {
+                signalTitle = '❌ トレンド未確認';
+                signalMessage = '4時間足で上昇トレンドが確認できません';
+            }
+
+            // UI更新
+            displayResults(trendAnalysis, rciAnalysis, signalStatus, signalTitle, signalMessage, price15m, beginnerMode);
+        }
+
+        function analyze4HourTrend(candle1, candle2, candle3) {
+            // 直近3本が上昇しているか
+            const isRising = c1 < c2 && c2 < c3;
+
+            // 高値と安値が切り上がっているか
+            const highsRising = h1 < h2 && h2 < h3;
+            const lowsRising = l1 < l2 && l2 < l3;
+
+            // 買いの勢い
+            const bullishCount = [
+                c1 > candle1.h - candle1.l ? 1 : 0,
+                c2 > candle2.h - candle2.l ? 1 : 0,
+                c3 > candle3.h - candle3.l ? 1 : 0
+            ].reduce((a, b) => a + b, 0);
+
+            const isUptrend = isRising && highsRising && lowsRising && bullishCount >= 2;
+
+            return {
+                isUptrend,
+                isRising,
+                highsRising,
+                lowsRising,
+                bullishRatio: (bullishCount / 3 * 100).toFixed(1)
+            };
+        }
+
+        function analyzeRCI(current, previous) {
+            const isOversold = current >= -60 && current <= -30;
+            const isCrossingZeroUp = previous < 0 && current >= 0;
+            const isNegative = current < 0;
+
+            return {
+                current,
+                previous,
+                isOversold,
+                isCrossingZeroUp,
+                isNegative,
+                status: isCrossingZeroUp ? 'crossing_up' : (isOversold ? 'oversold' : (isNegative ? 'negative' : 'positive'))
+            };
+        }
+
+        function displayResults(trend, rci, signalStatus, signalTitle, signalMessage, entryPrice, beginnerMode) {
+            document.getElementById('resultsContainer').style.display = 'block';
+
+            // シグナル表示
+            const signalCard = document.getElementById('signalDisplay');
+            signalCard.className = `signal-card ${signalStatus}`;
+            signalCard.innerHTML = `
+                <div class="signal-title">${signalTitle}</div>
+                <div class="signal-subtitle">${signalMessage}</div>
+                ${signalStatus === 'entry' ? `
+                    <div class="stat-row">
+                        <div class="stat-label">現在価格</div>
+                        <div class="stat-value">${entryPrice.toFixed(4)}</div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label">RCI</div>
+                        <div class="stat-value">${rci.current.toFixed(1)}%</div>
+                    </div>
+                ` : ''}
+            `;
+
+            // トレンド分析表示
+            const trendDiv = document.getElementById('trendAnalysis');
+            trendDiv.innerHTML = `
+                <div class="trend-status ${trend.isUptrend ? 'up' : 'down'}">
+                    ${trend.isUptrend ? '✅ 上昇トレンド確認' : '❌ 上昇トレンド未確認'}
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <div class="checklist-icon ${trend.isRising ? 'pass' : 'fail'}">
+                            ${trend.isRising ? '✓' : '✗'}
+                        </div>
+                        <div class="checklist-text">直近3本が上昇</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-icon ${trend.highsRising ? 'pass' : 'fail'}">
+                            ${trend.highsRising ? '✓' : '✗'}
+                        </div>
+                        <div class="checklist-text">高値が切り上がっている</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-icon ${trend.lowsRising ? 'pass' : 'fail'}">
+                            ${trend.lowsRising ? '✓' : '✗'}
+                        </div>
+                        <div class="checklist-text">安値が切り上がっている</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-icon ${trend.bullishRatio >= 50 ? 'pass' : 'fail'}">
+                            ${trend.bullishRatio >= 50 ? '✓' : '✗'}
+                        </div>
+                        <div class="checklist-text">買いの勢い: ${trend.bullishRatio}%</div>
+                    </div>
+                </div>
+            `;
+
+            // RCI詳細表示
+            if (document.getElementById('detailsContainer')) {
+                document.getElementById('detailsContainer').style.display = 'block';
+
+                const rciDiv = document.getElementById('rciDetails');
+                rciDiv.innerHTML = `
+                    <div class="stat-row">
+                        <div class="stat-label">RCI 現在値</div>
+                        <div class="stat-value" style="color: ${rci.current >= 0 ? '#28a745' : '#dc3545'}">
+                            ${rci.current.toFixed(1)}%
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label">RCI 前足値</div>
+                        <div class="stat-value" style="color: ${rci.previous >= 0 ? '#28a745' : '#dc3545'}">
+                            ${rci.previous.toFixed(1)}%
+                        </div>
+                    </div>
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <div class="checklist-icon ${rci.isOversold ? 'pass' : 'pending'}">
+                                ${rci.isOversold ? '✓' : '○'}
+                            </div>
+                            <div class="checklist-text">過売ゾーン (-30% ~ -60%)</div>
+                        </div>
+                        <div class="checklist-item">
+                            <div class="checklist-icon ${rci.isCrossingZeroUp ? 'pass' : 'pending'}">
+                                ${rci.isCrossingZeroUp ? '✓' : '○'}
+                            </div>
+                            <div class="checklist-text">0ラインを上抜け</div>
+                        </div>
+                    </div>
+                `;
+
+                // エントリー詳細表示
+                if (document.getElementById('detailsContainer')) {
+                    const entryDiv = document.getElementById('entryDetails');
+                    if (document.getElementById('beginnerMode').checked) {
+                        // 初心者モード
+                        const sl = entryPrice - 0.005;
+                        const tp = entryPrice + 0.01;
+                        entryDiv.innerHTML = `
+                            <div class="beginner-mode">
+                                <div class="mode-label">🎓 初心者向けモード</div>
+                                <div class="stat-row">
+                                    <div class="stat-label">エントリー価格</div>
+                                    <div class="stat-value">${entryPrice.toFixed(4)}</div>
+                                </div>
+                                <div class="stat-row">
+                                    <div class="stat-label">ストップロス (-50pips)</div>
+                                    <div class="stat-value" style="color: #dc3545;">${sl.toFixed(4)}</div>
+                                </div>
+                                <div class="stat-row">
+                                    <div class="stat-label">利確目標 (+100pips)</div>
+                                    <div class="stat-value" style="color: #28a745;">${tp.toFixed(4)}</div>
+                                </div>
+                                <div class="risk-reward">
+                                    <div class="risk-reward-label">リスク:リワード比</div>
+                                    <div class="risk-reward-value">1:2</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 標準モード
+                        const low15m = parseFloat(document.getElementById('low15m5').value);
+                        const sl = Math.min(low15m, entryPrice - 0.005);
+                        const pips = (entryPrice - sl) * 10000;
+                        const pt1 = entryPrice + (pips * 0.7 / 10000);
+                        const pt2 = entryPrice + (pips * 2 / 10000);
+
+                        entryDiv.innerHTML = `
+                            <div class="stat-row">
+                                <div class="stat-label">エントリー価格</div>
+                                <div class="stat-value">${entryPrice.toFixed(4)}</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">ストップロス</div>
+                                <div class="stat-value" style="color: #dc3545;">${sl.toFixed(4)}</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">SLまでの距離</div>
+                                <div class="stat-value">${pips.toFixed(1)} pips</div>
+                            </div>
+                            <div class="targets-grid">
+                                <div class="target">
+                                    <div class="target-label">利確1 (50%決済)</div>
+                                    <div class="target-value">${pt1.toFixed(4)}</div>
+                                    <div class="target-label">${(pips * 0.7).toFixed(1)} pips</div>
+                                </div>
+                                <div class="target">
+                                    <div class="target-label">利確2 (50%決済)</div>
+                                    <div class="target-value">${pt2.toFixed(4)}</div>
+                                    <div class="target-label">${(pips * 2).toFixed(1)} pips</div>
+                                </div>
+                            </div>
+                            <div class="risk-reward">
+                                <div class="risk-reward-label">リスク:リワード比</div>
+                                <div class="risk-reward-value">1:${((pips * 2) / pips).toFixed(1)}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        }
+
+        function resetForm() {
+            document.querySelectorAll('input[type="number"], select').forEach(el => el.value = '');
+            document.getElementById('beginnerMode').checked = false;
+            document.getElementById('resultsContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
